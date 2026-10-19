@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>NodeLinkDigital Order Flow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: short intro, then a three-column "stage" (customer phone | workflow + order record | owner phone) driven by a step bar; status, costs and asks follow as plain sections. */
+:root {
+  --bg: #f3f6f4;
+  --surface: #ffffff;
+  --ink: #142320;
+  --muted: #56655f;
+  --line: #d6dfdb;
+  --accent: #157a55;
+  --accent-soft: #dcefe6;
+  --owner: #9a5b00;
+  --owner-soft: #f6ead6;
+  --planned: #6b5ca5;
+  --planned-soft: #ebe7f6;
+  --bubble-in: #ffffff;
+  --bubble-out: #dcf1e5;
+  --chat-bg: #e8eeea;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1614; --surface: #17211e; --ink: #e4ece8; --muted: #9aaba4; --line: #2a3833;
+    --accent: #4cc191; --accent-soft: #173a2d; --owner: #e3a64a; --owner-soft: #3a2c15;
+    --planned: #a99be0; --planned-soft: #2a2442; --bubble-in: #1f2b27; --bubble-out: #1c4232; --chat-bg: #121b18;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1614; --surface: #17211e; --ink: #e4ece8; --muted: #9aaba4; --line: #2a3833;
+  --accent: #4cc191; --accent-soft: #173a2d; --owner: #e3a64a; --owner-soft: #3a2c15;
+  --planned: #a99be0; --planned-soft: #2a2442; --bubble-in: #1f2b27; --bubble-out: #1c4232; --chat-bg: #121b18;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 40px 64px; display: grid; gap: 56px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(2rem, 4.5vw, 3rem); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.6rem; font-weight: 700; }
+h3 { font-size: 1.05rem; font-weight: 700; }
+p { margin: 0; }
+.eyebrow { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.lede { color: var(--muted); max-width: 62ch; font-size: 1.1rem; }
+.intro { display: grid; gap: 14px; }
+.intro-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.built { color: var(--accent); background: var(--accent-soft); }
+.pill.draft { color: var(--owner); background: var(--owner-soft); }
+.pill.planned { color: var(--planned); background: var(--planned-soft); }
+.section-head { display: grid; gap: 6px; margin-bottom: 20px; }
+
+/* Step bar */
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.controls .group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button { font: inherit; font-weight: 600; font-size: 0.92rem; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 7px 14px; cursor: pointer; }
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:disabled { opacity: 0.4; cursor: default; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; padding: 7px 12px; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.counter { font-family: var(--mono); font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.explain { display: grid; gap: 6px; padding: 16px 18px; border-left: 3px solid var(--accent); background: var(--surface); border-radius: 0 10px 10px 0; margin-top: 14px; }
+.explain .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.explain p { color: var(--muted); max-width: 75ch; }
+
+/* Stage */
+.stage { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr) minmax(0, 300px); gap: 20px; margin-top: 18px; align-items: start; }
+.phone { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+.phone-top { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.avatar { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-family: var(--display); font-weight: 700; font-size: 0.85rem; color: var(--surface); background: var(--accent); flex: none; }
+.phone.owner .avatar { background: var(--owner); }
+.phone-top .who { display: grid; line-height: 1.2; min-width: 0; }
+.phone-top .who span { font-size: 0.78rem; color: var(--muted); }
+.chat { background: var(--chat-bg); height: 420px; overflow-y: auto; padding: 14px 12px; display: flex; flex-direction: column; gap: 8px; }
+.empty { margin: auto; text-align: center; color: var(--muted); font-size: 0.85rem; max-width: 22ch; }
+.msg { max-width: 86%; padding: 8px 11px; border-radius: 12px; font-size: 0.92rem; line-height: 1.4; box-shadow: 0 1px 0 rgba(0,0,0,0.06); animation: pop 0.25s ease-out; }
+.msg.in { align-self: flex-start; background: var(--bubble-in); border-top-left-radius: 4px; }
+.msg.out { align-self: flex-end; background: var(--bubble-out); border-top-right-radius: 4px; }
+.msg .meta { display: block; margin-top: 4px; font-family: var(--mono); font-size: 0.66rem; color: var(--muted); }
+.msg.planned { outline: 1.5px dashed var(--planned); outline-offset: -1.5px; }
+.msg.planned .meta { color: var(--planned); }
+@keyframes pop { from { transform: translateY(6px); opacity: 0.4; } to { transform: none; opacity: 1; } }
+
+.middle { display: grid; gap: 20px; min-width: 0; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-width: 0; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.flow { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; counter-reset: node; }
+.node { counter-increment: node; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; display: grid; gap: 6px; transition: border-color 0.2s, background 0.2s; }
+.node .name { font-weight: 600; font-size: 0.9rem; line-height: 1.25; }
+.node .name::before { content: counter(node) ". "; font-family: var(--mono); font-size: 0.75rem; color: var(--muted); }
+.node.done { background: var(--accent-soft); border-color: transparent; }
+.node.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); background: var(--surface); }
+.node .pill { justify-self: start; font-size: 0.64rem; }
+
+.record { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 7px 18px; margin: 0; font-size: 0.93rem; }
+.record dt { color: var(--muted); }
+.record dd { margin: 0; font-family: var(--mono); font-size: 0.86rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.record dd.blank { color: var(--line); }
+.record dd.fresh { animation: flash 0.9s ease-out; }
+@keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
+.status { font-family: var(--mono); font-size: 0.78rem; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: var(--line); color: var(--ink); }
+.status.waiting { background: var(--owner-soft); color: var(--owner); }
+.status.ok { background: var(--accent-soft); color: var(--accent); }
+
+/* Status board */
+.board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.col { display: grid; gap: 12px; align-content: start; }
+.col ul { margin: 0; padding-left: 18px; display: grid; gap: 7px; color: var(--ink); }
+.col li::marker { color: var(--muted); }
+
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
+.fact { border-top: 2px solid var(--ink); padding-top: 12px; display: grid; gap: 6px; }
+.fact .big { font-family: var(--display); font-size: 1.5rem; font-weight: 700; }
+.fact p { color: var(--muted); font-size: 0.95rem; }
+.note { font-size: 0.85rem; color: var(--muted); margin-top: 14px; max-width: 80ch; }
+.note a { color: var(--accent); }
+
+.asks { counter-reset: ask; list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; max-width: 80ch; }
+.asks li { counter-increment: ask; display: grid; grid-template-columns: 2.2rem minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.asks li::before { content: counter(ask); font-family: var(--display); font-weight: 700; font-size: 1.3rem; color: var(--accent); }
+.asks strong { font-weight: 600; }
+.asks span { color: var(--muted); }
+footer { color: var(--muted); font-size: 0.82rem; border-top: 1px solid var(--line); padding-top: 16px; }
+
+@media (max-width: 980px) {
+  .stage { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .middle { grid-column: 1 / -1; order: -1; }
+  .board { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .stage { grid-template-columns: minmax(0, 1fr); }
+  .chat { height: 300px; }
+  .controls { justify-content: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .msg, .record dd.fresh { animation: none; }
+  .node { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="intro">
+    <span class="eyebrow">NodeLinkDigital · Stakeholder walkthrough · Oct 2026</span>
+    <h1>Small shops take WhatsApp orders without typing a single reply.</h1>
+    <p class="lede">A customer asks about a product on WhatsApp. Our assistant answers from the shop's own catalogue and takes the order. The owner approves it with a one-word reply, and it lands in the delivery or pickup queue.</p>
+    <div class="intro-row">
+      <span class="pill built">Working in demo</span>
+      <span class="pill draft">Drafted, needs setup</span>
+      <span class="pill planned">Planned</span>
+      <span class="counter">Every step below is tagged with one of these.</span>
+    </div>
+  </header>
+
+  <section aria-labelledby="demo-h">
+    <div class="section-head">
+      <span class="eyebrow">Live walkthrough · example shop and products</span>
+      <h2 id="demo-h">Follow one order from first message to the delivery queue</h2>
+    </div>
+
+    <div class="controls" role="group" aria-label="Walkthrough controls">
+      <div class="group">
+        <button id="prev" type="button">Back</button>
+        <button id="next" type="button" class="primary">Next step</button>
+        <button id="play" type="button">Play all</button>
+        <button id="reset" type="button">Start over</button>
+        <span class="counter" id="counter" aria-live="polite"></span>
+      </div>
+      <div class="group">
+        <span class="counter">Customer wants</span>
+        <div class="seg" role="group" aria-label="Fulfilment type">
+          <button id="mode-delivery" type="button" aria-pressed="true">Delivery</button>
+          <button id="mode-pickup" type="button" aria-pressed="false">Warehouse pickup</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="explain" aria-live="polite">
+      <div class="row"><h3 id="ex-title"></h3><span id="ex-pill" class="pill"></span></div>
+      <p id="ex-body"></p>
+    </div>
+
+    <div class="stage">
+      <div class="phone">
+        <div class="phone-top"><div class="avatar">AK</div><div class="who"><strong>Anjali K. · customer</strong><span>Chatting with Kochi Kitchenware</span></div></div>
+        <div class="chat" id="chat-customer"></div>
+      </div>
+
+      <div class="middle">
+        <div class="panel">
+          <div class="panel-head"><h3>What the workflow is doing</h3><span class="counter">n8n workflow, 9 stages</span></div>
+          <ol class="flow" id="flow"></ol>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Order record</h3><span class="counter" id="rec-store">Stored in the order database</span></div>
+          <dl class="record" id="record"></dl>
+        </div>
+      </div>
+
+      <div class="phone owner">
+        <div class="phone-top"><div class="avatar">KK</div><div class="who"><strong>Shop owner</strong><span>Kochi Kitchenware · approvals</span></div></div>
+        <div class="chat" id="chat-owner"></div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="status-h">
+    <div class="section-head">
+      <span class="eyebrow">Where we are</span>
+      <h2 id="status-h">The order engine works end to end. Live WhatsApp is the next milestone.</h2>
+    </div>
+    <div class="board">
+      <div class="col">
+        <span class="pill built">Working in demo</span>
+        <ul>
+          <li>Order validation against a catalogue (price, quantity, stock)</li>
+          <li>Order database with Excel export for the owner</li>
+          <li>Owner approval step that live orders can't skip</li>
+          <li>Routing into delivery or warehouse pickup queues</li>
+          <li>Safe demo mode with labelled sample data</li>
+        </ul>
+      </div>
+      <div class="col">
+        <span class="pill draft">Drafted, needs setup</span>
+        <ul>
+          <li>Receiving real WhatsApp messages (needs Meta business account and a public HTTPS address)</li>
+          <li>AI assistant that reads customer messages (model not yet connected)</li>
+          <li>Owner replies <code>APPROVE</code> / <code>REJECT</code> (needs verified sender)</li>
+        </ul>
+      </div>
+      <div class="col">
+        <span class="pill planned">Planned before launch</span>
+        <ul>
+          <li>Sending replies and order updates to customers</li>
+          <li>Promotions to opted-in customers, with unsubscribe</li>
+          <li>Each shop's real catalogue, stock and delivery rules</li>
+          <li>Separate accounts per shop, backups, monitoring</li>
+          <li>Payments and courier integration, if we offer them</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="cost-h">
+    <div class="section-head">
+      <span class="eyebrow">Platform rules and running costs</span>
+      <h2 id="cost-h">What WhatsApp charges, and what it allows</h2>
+    </div>
+    <div class="facts">
+      <div class="fact"><span class="eyebrow">Replies to customers</span><span class="big">Free within 24 h</span><p>Replies inside the 24-hour window after a customer writes are free under Meta's current pricing page. Some providers report charges from 1 Oct 2026, so we're confirming that.</p></div>
+      <div class="fact"><span class="eyebrow">Order updates later</span><span class="big">Low per message</span><p>"Utility" templates are used for order updates sent after the window closes. Indicative US rate is about $0.004 each. Rates vary by country.</p></div>
+      <div class="fact"><span class="eyebrow">Promotions</span><span class="big">Highest cost</span><p>Marketing templates, about $0.025 each in the US. They're only sent to customers who opted in, and each campaign gets spend approval.</p></div>
+      <div class="fact"><span class="eyebrow">AI policy</span><span class="big">We're allowed</span><p>Since 15 Jan 2026 Meta bans general-purpose AI chatbots, but business bots that take orders are still permitted. Ours stays scoped to the shop's products.</p></div>
+    </div>
+    <p class="note">Sources: <a href="https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing" target="_blank" rel="noopener">Meta pricing docs</a>, <a href="https://hyperleap.ai/whatsapp-pricing-calculator-us" target="_blank" rel="noopener">Hyperleap US calculator</a>, <a href="https://respond.io/blog/whatsapp-general-purpose-chatbots-ban" target="_blank" rel="noopener">respond.io on the AI policy</a>. The full research note is in our internal repo.</p>
+  </section>
+
+  <section aria-labelledby="asks-h">
+    <div class="section-head">
+      <span class="eyebrow">Next steps</span>
+      <h2 id="asks-h">What gets us to the first live shop</h2>
+    </div>
+    <ol class="asks">
+      <li><div><strong>Pick a pilot shop and market.</strong> <span>Their catalogue replaces the sample, and their country's rates set our cost per order.</span></div></li>
+      <li><div><strong>Set up the Meta business account.</strong> <span>Separate test and live apps, plus a secure public address for the workflow.</span></div></li>
+      <li><div><strong>Connect and test the AI model.</strong> <span>Measure how often it reads orders correctly before any customer sees it.</span></div></li>
+      <li><div><strong>Turn on outgoing messages.</strong> <span>Approved templates, retries, and opt-in records. The team signs off on the first live message.</span></div></li>
+    </ol>
+  </section>
+
+  <footer>Kochi Kitchenware, the customer, the products and the prices are examples for this walkthrough. No real customer data is used, and the demo sends no WhatsApp messages.</footer>
+</div>
+
+<script>
+(function () {
+  var NODES = [
+    { id: "inbound",  name: "Message received",        tag: "draft" },
+    { id: "ai",       name: "AI reads the request",    tag: "draft" },
+    { id: "validate", name: "Check catalogue & stock", tag: "built" },
+    { id: "save",     name: "Save order",              tag: "built" },
+    { id: "excel",    name: "Excel export",            tag: "built" },
+    { id: "notify",   name: "Ask the owner",           tag: "built" },
+    { id: "decide",   name: "Owner decision",          tag: "built" },
+    { id: "route",    name: "Delivery or pickup queue", tag: "built" },
+    { id: "update",   name: "Update the customer",     tag: "planned" }
+  ];
+  var TAG_LABEL = { built: "Working in demo", draft: "Drafted, needs setup", planned: "Planned" };
+  var RECORD_FIELDS = [
+    ["id", "Order"], ["item", "Item"], ["qty", "Quantity"], ["price", "Unit price"], ["total", "Total"],
+    ["type", "Fulfilment"], ["where", "Address / pickup"], ["file", "Excel file"], ["status", "Status"]
+  ];
+
+  function steps(mode) {
+    var pickup = mode === "pickup";
+    return [
+      { node: "inbound", title: "A customer messages the shop", tag: "draft",
+        body: "The workflow receives the message and checks who sent it. Messages from the owner's number go to the approval lane; everything else is treated as a customer.",
+        customer: [{ dir: "in", text: "Hi, do you have the 5 litre pressure cooker?", meta: "Anjali · 10:02" }] },
+      { node: "ai", title: "The assistant answers from the shop's catalogue", tag: "draft",
+        body: "The AI understands what the customer is asking. The price and stock come from the shop's catalogue, never from the AI. Today this reply is prepared but not sent.",
+        customer: [{ dir: "out", text: "Yes! The 5 L stainless pressure cooker is ₹2,450 and we have 12 in stock. How many would you like, and should we deliver or will you pick up?", meta: "Assistant · not sent in demo", planned: true }] },
+      { node: "ai", title: "The customer gives the order details", tag: "draft",
+        body: "The AI turns the chat into a structured order: which item, how many, delivery or pickup, and where. If anything is unclear or the AI isn't available, a person takes over.",
+        customer: [{ dir: "in", text: pickup ? "2 please. I'll collect from your warehouse tomorrow." : "2 please. Deliver to Kakkanad, near Infopark Phase 1.", meta: "Anjali · 10:04" }],
+        record: { item: "5 L pressure cooker (PC-5L)", qty: "2", type: pickup ? "Warehouse pickup" : "Delivery",
+                  where: pickup ? "Edappally warehouse" : "Kakkanad, near Infopark Ph 1" } },
+      { node: "validate", title: "The order is checked against real stock", tag: "built",
+        body: "Trusted business logic confirms the product exists, the quantity is in stock and the details are complete, then works out the total.",
+        record: { price: "₹2,450", total: "₹4,900" } },
+      { node: "save", title: "The order is saved", tag: "built",
+        body: "The order gets an ID and is stored in the order database. It waits there until the owner decides.",
+        record: { id: "NL-1042", status: { text: "Waiting for owner", cls: "waiting" } } },
+      { node: "excel", title: "An Excel copy is created for the owner", tag: "built",
+        body: "Owners who run their business from spreadsheets get each order as an Excel file. The database stays the source of truth.",
+        record: { file: "order_NL-1042.xlsx" } },
+      { node: "notify", title: "The owner is asked to approve", tag: "built",
+        body: "Every real order stops here until the owner says yes. In the demo this notification is recorded as a dry run.",
+        owner: [{ dir: "in", text: "New order NL-1042\n2 × 5 L pressure cooker · ₹4,900\n" + (pickup ? "Pickup at Edappally warehouse" : "Deliver to Kakkanad") + "\n\nReply APPROVE NL-1042 or REJECT NL-1042", meta: "NodeLink · dry run in demo" }] },
+      { node: "decide", title: "The owner approves with one word", tag: "built",
+        body: "The workflow checks the reply really came from the owner's number before applying it. In the demo, approval is simulated, and only for clearly labelled sample orders.",
+        owner: [{ dir: "out", text: "APPROVE NL-1042", meta: "Owner · 10:09" }],
+        record: { status: { text: "Confirmed", cls: "ok" } } },
+      { node: "route", title: pickup ? "The order joins the pickup queue" : "The order joins the delivery queue", tag: "built",
+        body: pickup ? "The warehouse sees the order and prepares it for collection." : "The order is ready for dispatch. Booking a courier comes later, once we choose a delivery partner.",
+        record: { status: { text: pickup ? "Pickup queue · being prepared" : "Delivery queue · not dispatched", cls: "ok" } } },
+      { node: "update", title: "The customer hears back", tag: "planned",
+        body: "The confirmation goes back to the customer automatically. This is the main piece left to build: sending real WhatsApp messages, with retries.",
+        customer: [{ dir: "out", text: pickup ? "Your order NL-1042 is confirmed. It'll be ready at our Edappally warehouse tomorrow after 11 am." : "Your order NL-1042 is confirmed! 2 × 5 L pressure cooker, ₹4,900. We'll message you when it's out for delivery.", meta: "Assistant · planned", planned: true }] }
+    ];
+  }
+
+  var mode = "delivery", idx = 0, timer = null;
+  var $ = function (id) { return document.getElementById(id); };
+  var flowEl = $("flow"), recEl = $("record");
+
+  NODES.forEach(function (n) {
+    var li = document.createElement("li");
+    li.className = "node"; li.dataset.id = n.id;
+    li.innerHTML = '<span class="name"></span><span class="pill ' + n.tag + '"></span>';
+    li.querySelector(".name").textContent = n.name;
+    li.querySelector(".pill").textContent = TAG_LABEL[n.tag];
+    flowEl.appendChild(li);
+  });
+
+  function bubble(m) {
+    var d = document.createElement("div");
+    d.className = "msg " + m.dir + (m.planned ? " planned" : "");
+    m.text.split("\n").forEach(function (line, i) {
+      if (i) d.appendChild(document.createElement("br"));
+      d.appendChild(document.createTextNode(line));
+    });
+    var meta = document.createElement("span");
+    meta.className = "meta"; meta.textContent = m.meta;
+    d.appendChild(meta);
+    return d;
+  }
+
+  function fillChat(el, msgs, emptyText) {
+    el.innerHTML = "";
+    if (!msgs.length) {
+      var e = document.createElement("p"); e.className = "empty"; e.textContent = emptyText; el.appendChild(e);
+      return;
+    }
+    msgs.forEach(function (m) { el.appendChild(bubble(m)); });
+    el.scrollTop = el.scrollHeight;
+  }
+
+  var prevRecord = {};
+  function render() {
+    var list = steps(mode), s = list[idx];
+    var cust = [], own = [], rec = {}, freshKeys = {};
+    for (var i = 0; i <= idx; i++) {
+      var st = list[i];
+      if (st.customer) cust = cust.concat(st.customer);
+      if (st.owner) own = own.concat(st.owner);
+      if (st.record) for (var k in st.record) { rec[k] = st.record[k]; if (i === idx) freshKeys[k] = true; }
+    }
+    fillChat($("chat-customer"), cust, "Waiting for the customer's first message.");
+    fillChat($("chat-owner"), own, "The owner hears about the order once it's checked and saved.");
+
+    var activeIdx = NODES.findIndex(function (n) { return n.id === s.node; });
+    Array.prototype.forEach.call(flowEl.children, function (li, i) {
+      li.classList.toggle("active", i === activeIdx);
+      li.classList.toggle("done", i < activeIdx);
+    });
+
+    recEl.innerHTML = "";
+    RECORD_FIELDS.forEach(function (f) {
+      var dt = document.createElement("dt"); dt.textContent = f[1];
+      var dd = document.createElement("dd"), v = rec[f[0]];
+      if (v === undefined) { dd.textContent = "—"; dd.className = "blank"; }
+      else if (typeof v === "object") { var sp = document.createElement("span"); sp.className = "status " + v.cls; sp.textContent = v.text; dd.appendChild(sp); }
+      else dd.textContent = v;
+      if (freshKeys[f[0]]) dd.classList.add("fresh");
+      recEl.appendChild(dt); recEl.appendChild(dd);
+    });
+
+    $("ex-title").textContent = s.title;
+    $("ex-pill").className = "pill " + s.tag;
+    $("ex-pill").textContent = TAG_LABEL[s.tag];
+    $("ex-body").textContent = s.body;
+    $("counter").textContent = "Step " + (idx + 1) + " of " + list.length;
+    $("prev").disabled = idx === 0;
+    $("next").disabled = idx === list.length - 1;
+  }
+
+  function stop() { if (timer) { clearInterval(timer); timer = null; $("play").textContent = "Play all"; } }
+  function go(n) { idx = Math.max(0, Math.min(steps(mode).length - 1, n)); render(); }
+
+  $("next").addEventListener("click", function () { stop(); go(idx + 1); });
+  $("prev").addEventListener("click", function () { stop(); go(idx - 1); });
+  $("reset").addEventListener("click", function () { stop(); go(0); });
+  $("play").addEventListener("click", function () {
+    if (timer) { stop(); return; }
+    if (idx === steps(mode).length - 1) go(0);
+    $("play").textContent = "Pause";
+    timer = setInterval(function () {
+      if (idx >= steps(mode).length - 1) { stop(); return; }
+      go(idx + 1);
+    }, 2600);
+  });
+  function setMode(m) {
+    mode = m;
+    $("mode-delivery").setAttribute("aria-pressed", String(m === "delivery"));
+    $("mode-pickup").setAttribute("aria-pressed", String(m === "pickup"));
+    render();
+  }
+  $("mode-delivery").addEventListener("click", function () { setMode("delivery"); });
+  $("mode-pickup").addEventListener("click", function () { setMode("pickup"); });
+  document.addEventListener("keydown", function (e) {
+    if (e.target.closest && e.target.closest("input, textarea")) return;
+    if (e.key === "ArrowRight") { stop(); go(idx + 1); }
+    if (e.key === "ArrowLeft") { stop(); go(idx - 1); }
+  });
+
+  go(2);
+})();
+</script>
+</body>
+</html>
