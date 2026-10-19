@@ -105,13 +105,46 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 .middle { display: grid; gap: 20px; min-width: 0; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-width: 0; }
 .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-.flow { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; counter-reset: node; }
-.node { counter-increment: node; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; display: grid; gap: 6px; transition: border-color 0.2s, background 0.2s; }
-.node .name { font-weight: 600; font-size: 0.9rem; line-height: 1.25; }
-.node .name::before { content: counter(node) ". "; font-family: var(--mono); font-size: 0.75rem; color: var(--muted); }
-.node.done { background: var(--accent-soft); border-color: transparent; }
-.node.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); background: var(--surface); }
+.route-note { font-size: 0.88rem; color: var(--muted); margin-top: -4px; }
+.cargo { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 0.75rem; color: var(--muted); }
+.cargo strong { color: var(--ink); font-weight: 600; }
+.cargo svg { width: 30px; height: 18px; flex: none; }
+.route { position: relative; padding: 30px 26px 4px; }
+.road { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 0; }
+.road .base, .road .trav, .road .lane { fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.road .base { stroke: var(--line); stroke-width: 9; }
+.road .trav { stroke: var(--accent); stroke-width: 9; }
+.road .lane { stroke: var(--surface); stroke-width: 1.5; stroke-dasharray: 5 6; }
+.road .chev { fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.road .chev.on { stroke: var(--surface); }
+.flow { position: relative; z-index: 1; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 26px; row-gap: 40px; }
+.flow .node:nth-child(1) { grid-area: 1 / 1; }
+.flow .node:nth-child(2) { grid-area: 1 / 2; }
+.flow .node:nth-child(3) { grid-area: 1 / 3; }
+.flow .node:nth-child(4) { grid-area: 2 / 3; }
+.flow .node:nth-child(5) { grid-area: 2 / 2; }
+.flow .node:nth-child(6) { grid-area: 2 / 1; }
+.flow .node:nth-child(7) { grid-area: 3 / 1; }
+.flow .node:nth-child(8) { grid-area: 3 / 2; }
+.flow .node:nth-child(9) { grid-area: 3 / 3; }
+.node { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 10px 10px; display: grid; gap: 5px; align-content: start; transition: border-color 0.2s, background 0.2s; }
+.node .stop { position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%); width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-family: var(--mono); font-size: 0.7rem; font-weight: 600; background: var(--surface); border: 2px solid var(--line); color: var(--muted); }
+.node .name { font-weight: 600; font-size: 0.88rem; line-height: 1.25; }
+.node .ctx { font-family: var(--mono); font-size: 0.72rem; line-height: 1.4; min-height: 4.2em; color: var(--muted); overflow-wrap: anywhere; }
+.node.done, .node.active { background: var(--accent-soft); border-color: transparent; }
+.node.done .ctx, .node.active .ctx { color: var(--ink); }
+.node.done .stop { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.node.active { box-shadow: 0 0 0 2px var(--accent); }
 .node .pill { justify-self: start; font-size: 0.64rem; max-width: 100%; white-space: normal; }
+.truck { position: absolute; left: 0; top: 0; z-index: 3; width: 46px; height: 28px; pointer-events: none; will-change: transform; }
+.truck .flip { width: 100%; height: 100%; }
+.truck svg { display: block; width: 100%; height: 100%; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.25)); }
+.t-box { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
+.t-stripe { fill: var(--accent); }
+.t-cab { fill: var(--accent); stroke: var(--ink); stroke-width: 1.5; stroke-linejoin: round; }
+.t-win { fill: var(--surface); }
+.t-wheel { fill: var(--ink); }
+.t-hub { fill: var(--surface); }
 
 .record { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 7px 18px; margin: 0; font-size: 0.93rem; }
 .record dt { color: var(--muted); }
@@ -151,6 +184,9 @@ footer { color: var(--muted); font-size: 0.82rem; border-top: 1px solid var(--li
 @media (max-width: 640px) {
   .stage { grid-template-columns: minmax(0, 1fr); }
   .chat { height: 300px; }
+  .flow { grid-template-columns: minmax(0, 1fr); row-gap: 40px; }
+  .flow .node:nth-child(n) { grid-area: auto; }
+  .route { padding-left: 32px; padding-right: 4px; }
   .controls { justify-content: flex-start; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -160,6 +196,17 @@ footer { color: var(--muted); font-size: 0.82rem; border-top: 1px solid var(--li
 </style>
 </head>
 <body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="truck-shape" viewBox="0 0 46 28">
+    <rect class="t-box" x="1.5" y="3" width="27" height="17" rx="2"/>
+    <rect class="t-stripe" x="5" y="9.5" width="20" height="3" rx="1"/>
+    <path class="t-cab" d="M28.5 8 H38 L44 14 V20 H28.5 Z"/>
+    <path class="t-win" d="M31 10 H37 L40.5 13.5 H31 Z"/>
+    <circle class="t-wheel" cx="9" cy="22" r="4"/><circle class="t-hub" cx="9" cy="22" r="1.5"/>
+    <circle class="t-wheel" cx="37" cy="22" r="4"/><circle class="t-hub" cx="37" cy="22" r="1.5"/>
+  </symbol>
+</svg>
 
 <div class="wrap">
   <header class="intro">
@@ -210,8 +257,13 @@ footer { color: var(--muted); font-size: 0.82rem; border-top: 1px solid var(--li
 
       <div class="middle">
         <div class="panel">
-          <div class="panel-head"><h3>What the workflow is doing</h3><span class="counter">n8n workflow, 9 stages</span></div>
-          <ol class="flow" id="flow"></ol>
+          <div class="panel-head"><h3>What the workflow is doing</h3><span class="cargo" aria-live="polite"><svg viewBox="0 0 46 28" aria-hidden="true"><use href="#truck-shape"/></svg>On the truck: <strong id="cargo"></strong></span></div>
+          <p class="route-note">The order travels along the road in the direction of the arrows. Each stop shows what it did with this order.</p>
+          <div class="route" id="route">
+            <svg class="road" id="road" aria-hidden="true"></svg>
+            <ol class="flow" id="flow"></ol>
+            <div class="truck" id="truck" aria-hidden="true"><div class="flip"><svg viewBox="0 0 46 28"><use href="#truck-shape"/></svg></div></div>
+          </div>
         </div>
         <div class="panel">
           <div class="panel-head"><h3>Order record</h3><span class="counter" id="rec-store">Stored in the order database</span></div>
@@ -296,15 +348,15 @@ footer { color: var(--muted); font-size: 0.82rem; border-top: 1px solid var(--li
 <script>
 (function () {
   var NODES = [
-    { id: "inbound",  name: "Message received",        tag: "draft" },
-    { id: "ai",       name: "AI reads the request",    tag: "draft" },
-    { id: "validate", name: "Check catalogue & stock", tag: "built" },
-    { id: "save",     name: "Save order",              tag: "built" },
-    { id: "excel",    name: "Excel export",            tag: "built" },
-    { id: "notify",   name: "Ask the owner",           tag: "built" },
-    { id: "decide",   name: "Owner decision",          tag: "built" },
-    { id: "route",    name: "Delivery or pickup queue", tag: "built" },
-    { id: "update",   name: "Update the customer",     tag: "planned" }
+    { id: "inbound",  name: "Message received",         tag: "draft",   what: "Customer or owner?" },
+    { id: "ai",       name: "AI reads the request",     tag: "draft",   what: "Understand what they want" },
+    { id: "validate", name: "Check catalogue & stock",  tag: "built",   what: "Price, stock, details" },
+    { id: "save",     name: "Save order",               tag: "built",   what: "Order database" },
+    { id: "excel",    name: "Excel export",             tag: "built",   what: "Copy for the owner" },
+    { id: "notify",   name: "Ask the owner",            tag: "built",   what: "Approval request" },
+    { id: "decide",   name: "Owner decision",           tag: "built",   what: "Approve or reject" },
+    { id: "route",    name: "Delivery or pickup queue", tag: "built",   what: "Hand over to fulfilment" },
+    { id: "update",   name: "Update the customer",      tag: "planned", what: "Confirmation message" }
   ];
   var TAG_LABEL = { built: "Working in demo", draft: "Drafted, needs setup", planned: "Planned" };
   var RECORD_FIELDS = [
@@ -316,36 +368,46 @@ footer { color: var(--muted); font-size: 0.82rem; border-top: 1px solid var(--li
     var pickup = mode === "pickup";
     return [
       { node: "inbound", title: "A customer messages the shop", tag: "draft",
+        cargo: "Customer message", ctx: "From Anjali → customer lane",
         body: "The workflow receives the message and checks who sent it. Messages from the owner's number go to the approval lane; everything else is treated as a customer.",
         customer: [{ dir: "in", text: "Hi, do you have the 5 litre pressure cooker?", meta: "Anjali · 10:02" }] },
       { node: "ai", title: "The assistant answers from the shop's catalogue", tag: "draft",
+        cargo: "Question about PC-5L", ctx: "Asked: 5 L cooker in stock?",
         body: "The AI understands what the customer is asking. The price and stock come from the shop's catalogue, never from the AI. Today this reply is prepared but not sent.",
         customer: [{ dir: "out", text: "Yes! The 5 L stainless pressure cooker is ₹2,450 and we have 12 in stock. How many would you like, and should we deliver or will you pick up?", meta: "Assistant · not sent in demo", planned: true }] },
       { node: "ai", title: "The customer gives the order details", tag: "draft",
+        cargo: "Order details", ctx: pickup ? "2 × PC-5L · pickup · Edappally" : "2 × PC-5L · delivery · Kakkanad",
         body: "The AI turns the chat into a structured order: which item, how many, delivery or pickup, and where. If anything is unclear or the AI isn't available, a person takes over.",
         customer: [{ dir: "in", text: pickup ? "2 please. I'll collect from your warehouse tomorrow." : "2 please. Deliver to Kakkanad, near Infopark Phase 1.", meta: "Anjali · 10:04" }],
         record: { item: "5 L pressure cooker (PC-5L)", qty: "2", type: pickup ? "Warehouse pickup" : "Delivery",
                   where: pickup ? "Edappally warehouse" : "Kakkanad, near Infopark Ph 1" } },
       { node: "validate", title: "The order is checked against real stock", tag: "built",
+        cargo: "Checked order", ctx: "₹2,450 × 2 = ₹4,900 · 12 in stock",
         body: "Trusted business logic confirms the product exists, the quantity is in stock and the details are complete, then works out the total.",
         record: { price: "₹2,450", total: "₹4,900" } },
       { node: "save", title: "The order is saved", tag: "built",
+        cargo: "Order NL-1042", ctx: "NL-1042 · waiting for owner",
         body: "The order gets an ID and is stored in the order database. It waits there until the owner decides.",
         record: { id: "NL-1042", status: { text: "Waiting for owner", cls: "waiting" } } },
       { node: "excel", title: "An Excel copy is created for the owner", tag: "built",
+        cargo: "order_NL-1042.xlsx", ctx: "order_NL-1042.xlsx created",
         body: "Owners who run their business from spreadsheets get each order as an Excel file. The database stays the source of truth.",
         record: { file: "order_NL-1042.xlsx" } },
       { node: "notify", title: "The owner is asked to approve", tag: "built",
+        cargo: "Approval request", ctx: "Sent to owner (dry run)",
         body: "Every real order stops here until the owner says yes. In the demo this notification is recorded as a dry run.",
         owner: [{ dir: "in", text: "New order NL-1042\n2 × 5 L pressure cooker · ₹4,900\n" + (pickup ? "Pickup at Edappally warehouse" : "Deliver to Kakkanad") + "\n\nReply APPROVE NL-1042 or REJECT NL-1042", meta: "NodeLink · dry run in demo" }] },
       { node: "decide", title: "The owner approves with one word", tag: "built",
+        cargo: "Owner approval", ctx: "APPROVE from owner's number",
         body: "The workflow checks the reply really came from the owner's number before applying it. In the demo, approval is simulated, and only for clearly labelled sample orders.",
         owner: [{ dir: "out", text: "APPROVE NL-1042", meta: "Owner · 10:09" }],
         record: { status: { text: "Confirmed", cls: "ok" } } },
       { node: "route", title: pickup ? "The order joins the pickup queue" : "The order joins the delivery queue", tag: "built",
+        cargo: pickup ? "Pickup ticket" : "Delivery ticket", ctx: pickup ? "Pickup queue · being prepared" : "Delivery queue · not dispatched",
         body: pickup ? "The warehouse sees the order and prepares it for collection." : "The order is ready for dispatch. Booking a courier comes later, once we choose a delivery partner.",
         record: { status: { text: pickup ? "Pickup queue · being prepared" : "Delivery queue · not dispatched", cls: "ok" } } },
       { node: "update", title: "The customer hears back", tag: "planned",
+        cargo: "Confirmation message", ctx: "Confirmation to Anjali (planned)",
         body: "The confirmation goes back to the customer automatically. This is the main piece left to build: sending real WhatsApp messages, with retries.",
         customer: [{ dir: "out", text: pickup ? "Your order NL-1042 is confirmed. It'll be ready at our Edappally warehouse tomorrow after 11 am." : "Your order NL-1042 is confirmed! 2 × 5 L pressure cooker, ₹4,900. We'll message you when it's out for delivery.", meta: "Assistant · planned", planned: true }] }
     ];
@@ -355,14 +417,89 @@ footer { color: var(--muted); font-size: 0.82rem; border-top: 1px solid var(--li
   var $ = function (id) { return document.getElementById(id); };
   var flowEl = $("flow"), recEl = $("record");
 
-  NODES.forEach(function (n) {
+  NODES.forEach(function (n, i) {
     var li = document.createElement("li");
     li.className = "node"; li.dataset.id = n.id;
-    li.innerHTML = '<span class="name"></span><span class="pill ' + n.tag + '"></span>';
+    li.innerHTML = '<span class="stop">' + (i + 1) + '</span><span class="name"></span><span class="ctx"></span><span class="pill ' + n.tag + '"></span>';
     li.querySelector(".name").textContent = n.name;
     li.querySelector(".pill").textContent = TAG_LABEL[n.tag];
     flowEl.appendChild(li);
   });
+
+  // Road map: stops sit on each card's top edge; consecutive stops in a row join directly,
+  // row changes loop around the outer side. The truck rides these points.
+  var routeEl = $("route"), roadEl = $("road"), truckEl = $("truck"), flipEl = truckEl.querySelector(".flip");
+  var stops = [], segs = [], truckAt = -1, truckDir = 1, activeIdx = 0, anims = [];
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function flatten(list) {
+    var out = [];
+    list.forEach(function (seg) { seg.forEach(function (p, k) { if (k || !out.length) out.push(p); }); });
+    return out;
+  }
+  function pts(list) { return list.map(function (p) { return p.x.toFixed(1) + "," + p.y.toFixed(1); }).join(" "); }
+
+  function layout() {
+    var c = routeEl.getBoundingClientRect(), W = c.width, H = c.height;
+    var oneCol = getComputedStyle(flowEl).gridTemplateColumns.split(" ").length === 1;
+    stops = Array.prototype.map.call(flowEl.children, function (li) {
+      var r = li.getBoundingClientRect();
+      return { x: r.left - c.left + r.width / 2, y: r.top - c.top };
+    });
+    segs = [];
+    for (var i = 0; i < stops.length - 1; i++) {
+      var a = stops[i], b = stops[i + 1];
+      if (Math.abs(a.y - b.y) < 2) { segs.push([a, b]); continue; }
+      var side = !oneCol && a.x > W / 2 ? W - 13 : 14;
+      segs.push([a, { x: side, y: a.y }, { x: side, y: b.y }, b]);
+    }
+    roadEl.setAttribute("viewBox", "0 0 " + W + " " + H);
+    var all = pts(flatten(segs));
+    var html = '<polyline class="base" points="' + all + '"/><polyline class="trav" points=""/><polyline class="lane" points="' + all + '"/>';
+    segs.forEach(function (seg, i) {
+      var p = seg.length === 2 ? seg[0] : seg[1], q = seg.length === 2 ? seg[1] : seg[2];
+      var ang = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI;
+      html += '<path class="chev" data-seg="' + i + '" d="M-3,-4 L2,0 L-3,4" transform="translate(' +
+        ((p.x + q.x) / 2).toFixed(1) + ',' + ((p.y + q.y) / 2).toFixed(1) + ') rotate(' + ang.toFixed(1) + ')"/>';
+    });
+    roadEl.innerHTML = html;
+    paintRoad();
+  }
+
+  function paintRoad() {
+    var trav = roadEl.querySelector(".trav");
+    if (!trav) return;
+    trav.setAttribute("points", activeIdx > 0 ? pts(flatten(segs.slice(0, activeIdx))) : "");
+    Array.prototype.forEach.call(roadEl.querySelectorAll(".chev"), function (ch) {
+      ch.classList.toggle("on", +ch.dataset.seg < activeIdx);
+    });
+  }
+
+  function truckXY(p) { return "translate(" + (p.x - 23).toFixed(1) + "px," + (p.y - 24).toFixed(1) + "px)"; }
+  function placeTruck(i) {
+    anims.forEach(function (a) { a.cancel(); }); anims = [];
+    if (!stops[i]) return;
+    truckEl.style.transform = truckXY(stops[i]);
+    flipEl.style.transform = "scaleX(" + truckDir + ")";
+    truckAt = i;
+  }
+  function moveTruck(target) {
+    if (truckAt < 0 || target <= truckAt || reduceMotion || !truckEl.animate) { placeTruck(target); return; }
+    anims.forEach(function (a) { a.cancel(); }); anims = [];
+    var path = flatten(segs.slice(truckAt, target)), L = [0];
+    for (var k = 1; k < path.length; k++) L.push(L[k - 1] + Math.hypot(path[k].x - path[k - 1].x, path[k].y - path[k - 1].y));
+    var total = L[L.length - 1] || 1, d = truckDir, dirs = [];
+    for (k = 0; k < path.length; k++) {
+      if (k < path.length - 1) { var dx = path[k + 1].x - path[k].x; if (Math.abs(dx) > 1) d = dx > 0 ? 1 : -1; }
+      dirs.push(d);
+    }
+    var opts = { duration: Math.max(500, Math.min(2200, total / 0.32)), easing: "ease-in-out", fill: "forwards" };
+    var move = truckEl.animate(path.map(function (p, k) { return { transform: truckXY(p), offset: L[k] / total }; }), opts);
+    var flip = flipEl.animate(dirs.map(function (v, k) { return { transform: "scaleX(" + v + ")", offset: L[k] / total, easing: "steps(1, end)" }; }), opts);
+    anims = [move, flip];
+    truckAt = target; truckDir = d;
+    move.onfinish = function () { if (anims[0] === move) placeTruck(target); };
+  }
 
   function bubble(m) {
     var d = document.createElement("div");
@@ -390,9 +527,10 @@ footer { color: var(--muted); font-size: 0.82rem; border-top: 1px solid var(--li
   var prevRecord = {};
   function render() {
     var list = steps(mode), s = list[idx];
-    var cust = [], own = [], rec = {}, freshKeys = {};
+    var cust = [], own = [], rec = {}, freshKeys = {}, ctx = {};
     for (var i = 0; i <= idx; i++) {
       var st = list[i];
+      ctx[st.node] = st.ctx;
       if (st.customer) cust = cust.concat(st.customer);
       if (st.owner) own = own.concat(st.owner);
       if (st.record) for (var k in st.record) { rec[k] = st.record[k]; if (i === idx) freshKeys[k] = true; }
@@ -400,11 +538,15 @@ footer { color: var(--muted); font-size: 0.82rem; border-top: 1px solid var(--li
     fillChat($("chat-customer"), cust, "Waiting for the customer's first message.");
     fillChat($("chat-owner"), own, "The owner hears about the order once it's checked and saved.");
 
-    var activeIdx = NODES.findIndex(function (n) { return n.id === s.node; });
+    activeIdx = NODES.findIndex(function (n) { return n.id === s.node; });
     Array.prototype.forEach.call(flowEl.children, function (li, i) {
       li.classList.toggle("active", i === activeIdx);
       li.classList.toggle("done", i < activeIdx);
+      li.querySelector(".ctx").textContent = ctx[NODES[i].id] || NODES[i].what;
     });
+    $("cargo").textContent = s.cargo;
+    paintRoad();
+    moveTruck(activeIdx);
 
     recEl.innerHTML = "";
     RECORD_FIELDS.forEach(function (f) {
@@ -455,7 +597,11 @@ footer { color: var(--muted); font-size: 0.82rem; border-top: 1px solid var(--li
     if (e.key === "ArrowLeft") { stop(); go(idx - 1); }
   });
 
+  function relayout() { layout(); if (!anims.length) placeTruck(activeIdx); }
+  layout();
   go(2);
+  if (window.ResizeObserver) new ResizeObserver(relayout).observe(routeEl);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(relayout);
 })();
 </script>
 </body>
